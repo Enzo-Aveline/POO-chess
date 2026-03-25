@@ -55,6 +55,12 @@ class Board implements InterfaceBoard{
 
     public function getKingPosition(PieceColor $color): ?Position
     {
+        $pieces = $this->getPieces();
+        foreach ($pieces as $piece) {
+            if ($piece->getColor() == $color && $piece->getType() === PieceType::KING) {
+                return $piece->getPosition();
+            }
+        }
         return null;
     }
 
@@ -72,11 +78,7 @@ $piece= new King(PieceColor::WHITE,$position);
 
 $board=new Board();
 $board->placePiece($piece);
-$board->getPieceAt($position);
-$board->hasPieceAt($position);
+var_dump($board->getKingPosition(PieceColor::WHITE));
 
-var_dump($board->hasPieceAt($position));
-$board->removePieceAt($position);
-var_dump($board->hasPieceAt($position));
 
 

@@ -18,9 +18,13 @@ class Board implements InterfaceBoard{
         $this->pieces[$position->toKey()] = $piece;
     }
 
-    public function getPieceAt(Position $position): ?Piece
-    {
-        return $this->pieces[$position->toKey()];
+    public function getPieceAt(Position $position): ?Piece{
+        $key = $position->toKey();
+        if ($this->hasPieceAt($position)) {
+            return $this->pieces[$key];
+        }
+        return null;
+        //return $this->getPieces()[$position->toKey()];
     }
 
     public function hasPieceAt(Position $position): bool
@@ -66,19 +70,45 @@ class Board implements InterfaceBoard{
 
     public function render(): string
     {
-        return "";
+        $result = "";
+
+        // On commence par la ligne 7 (Haut) et on descend vers 0 (Bas)
+        for ($row = 7; $row >= 0; $row--) {
+
+            // Petit indicateur de numéro de ligne sur le côté
+            $result .= $row . " | ";
+
+            for ($col = 0; $col <= 7; $col++) {
+                $pos = new Position($row, $col);
+                $piece = $this->getPieceAt($pos);
+
+                if ($piece !== null) {
+                    // On appelle le render() de la pièce (ex: ♟, ♜, ♔)
+                    $result .= $piece->render() . " ";
+                } else {
+                    // Case vide : on affiche un point ou un espace
+                    $result .= ". ";
+                }
+            }
+            $result .= "\n"; // Saut de ligne après chaque rangée
+        }
+
+        // Affichage des lettres de colonnes en bas
+        $result .= "    ----------------\n";
+        $result .= "     0 1 2 3 4 5 6 7\n";
+
+        return $result;
     }
 
 }
 
 
 $position=new Position(1,1);
-$position2 = new Position(2,3);
 $piece= new King(PieceColor::WHITE,$position);
 
 $board=new Board();
 $board->placePiece($piece);
-var_dump($board->getKingPosition(PieceColor::WHITE));
+var_dump($board->render());
 
 
 

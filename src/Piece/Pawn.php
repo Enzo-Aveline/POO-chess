@@ -10,13 +10,13 @@ class Pawn extends Piece
 
     }
 
-    public function isValidMovementShape(Position $target):bool{
+    protected function isValidMovementShape(Position $target): bool {
         $distanceRow = $target->getRow() - $this->position->getRow();
         $distanceCol = abs($target->getColumn() - $this->position->getColumn());
 
-        $direction = ($this->color === PieceColor::WHITE) ? 1 : -1;
+        $direction = ($this->color === PieceColor::WHITE) ? -1 : 1;
         //ligne de depart
-        $startRow = ($this->color === PieceColor::WHITE) ? 1 : 6;
+        $startRow = ($this->color === PieceColor::WHITE) ? 6 : 1;
 
 
         //on gere les cas un par un
@@ -31,5 +31,50 @@ class Pawn extends Piece
         $isCapture = ($distanceRow === $direction && $distanceCol === 1);
 
         return $oneStep || $twoSteps || $isCapture;
+    }
+
+    public function canMove(Board $board, Position $target): bool {
+        // Vérifie qu'on ne reste pas sur place
+        if ($this->position->equals($target)) {
+            return false;
+        }
+
+        if (!$this->isValidMovementShape($target)) {
+            return false;
+        }
+
+        // Vérifie allié sur la case cible
+        $targetPiece = $board->getPieceAt($target);
+        if ($targetPiece !== null && $targetPiece->getColor() === $this->color) {
+            return false;
+        }
+
+        $distanceRow = $target->getRow() - $this->position->getRow();
+        $distanceCol = abs($target->getColumn() - $this->position->getColumn());
+        $direction = ($this->color === PieceColor::WHITE) ? -1 : 1;
+
+        // Mouvement en diagonale = capture obligatoire
+        if ($distanceCol === 1) {
+            if ($targetPiece === null) {
+                return false; // Pas de pièce à capturer
+            }
+            return true;
+        }
+
+        // Mouvement en avant : la case cible doit être vide
+        if ($targetPiece !== null) {
+            return false;
+        }
+
+        // Vérifier le chemin pour l'avance de 2 cases
+        if (abs($distanceRow) === 2) {
+            $intermediateRow = $this->position->getRow() + $direction;
+            $intermediate = new Position($intermediateRow, $this->position->getColumn());
+            if ($board->hasPieceAt($intermediate)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

@@ -10,13 +10,13 @@ class Pawn extends Piece
 
     }
 
-    public function isValidMovementShape(Position $target):bool{
+    protected function isValidMovementShape(Position $target):bool{
         $distanceRow = $target->getRow() - $this->position->getRow();
         $distanceCol = abs($target->getColumn() - $this->position->getColumn());
 
-        $direction = ($this->color === PieceColor::WHITE) ? 1 : -1;
+        $direction = ($this->color === PieceColor::WHITE) ? -1 : 1;
         //ligne de depart
-        $startRow = ($this->color === PieceColor::WHITE) ? 1 : 6;
+        $startRow = ($this->color === PieceColor::WHITE) ? 6 : 1;
 
 
         //on gere les cas un par un
@@ -31,5 +31,21 @@ class Pawn extends Piece
         $isCapture = ($distanceRow === $direction && $distanceCol === 1);
 
         return $oneStep || $twoSteps || $isCapture;
+    }
+
+    public function canMove(Board $board, Position $target): bool {
+        $distanceCol = abs($target->getColumn() - $this->position->getColumn());
+
+        // Avance : la case cible doit être vide
+        if ($distanceCol === 0 && $board->hasPieceAt($target)) {
+            throw new InvalidMoveException;
+        }
+
+        // Diagonale : il doit y avoir une pièce à capturer
+        if ($distanceCol === 1 && !$this->canCapture($board, $target)) {
+            throw new InvalidMoveException;
+        }
+
+        return parent::canMove($board, $target);
     }
 }

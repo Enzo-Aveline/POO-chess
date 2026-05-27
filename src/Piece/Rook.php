@@ -10,7 +10,7 @@ class Rook extends Piece
 
     }
 
-    public function isValidMovementShape(Position $target):bool
+    protected function isValidMovementShape(Position $target):bool
     {
         //vrai si on ne bouge que sur la colone ou la ligne 
 

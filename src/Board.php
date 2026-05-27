@@ -1,13 +1,6 @@
 <?php
 
-require_once __DIR__ . '/Contract/InterfaceBoard.php';
-require_once __DIR__ . '/Position.php';
-require_once __DIR__ . '/Piece/Piece.php';
-require_once __DIR__ . '/Piece/King.php';
-require_once __DIR__ . '/Enum/PieceColor.php';
-require_once __DIR__ . '/Enum/PieceType.php';
-
-class Board implements InterfaceBoard{
+class Board implements InterfaceBoard {
 
     private array $pieces = [];
 
@@ -24,7 +17,6 @@ class Board implements InterfaceBoard{
             return $this->pieces[$key];
         }
         return null;
-        //return $this->getPieces()[$position->toKey()];
     }
 
     public function hasPieceAt(Position $position): bool
@@ -38,18 +30,32 @@ class Board implements InterfaceBoard{
     }
 
     public function movePiece(Position $from, Position $to): void{
-        $move = new Move($from,$to);
         $piece = $this->getPieceAt($from);
 
-        if(!$piece->canMove($this,$to)){
-            throw new Exception("Mouvement invalide pour cette piece !");
+        if ($piece === null) {
+            throw new NoPieceException;
         }
-        
+
         $this->removePieceAt($from);
+        $this->removePieceAt($to);
+        $piece->setPosition($to);
         $this->placePiece($piece);
     }
 
     public function isPathClear(Position $from, Position $to): bool{
+        $rowDir = ($to->getRow() - $from->getRow()) <=> 0;
+        $colDir = ($to->getColumn() - $from->getColumn()) <=> 0;
+
+        $currentRow = $from->getRow() + $rowDir;
+        $currentCol = $from->getColumn() + $colDir;
+
+        while ($currentRow !== $to->getRow() || $currentCol !== $to->getColumn()) {
+            if ($this->hasPieceAt(new Position($currentRow, $currentCol))) {
+                return false;
+            }
+            $currentRow += $rowDir;
+            $currentCol += $colDir;
+        }
         return true;
     }
 
@@ -61,7 +67,7 @@ class Board implements InterfaceBoard{
     {
         $pieces = $this->getPieces();
         foreach ($pieces as $piece) {
-            if ($piece->getColor() == $color && $piece->getType() === PieceType::KING) {
+            if ($piece->getColor() === $color && $piece->getType() === PieceType::KING) {
                 return $piece->getPosition();
             }
         }
@@ -72,8 +78,8 @@ class Board implements InterfaceBoard{
     {
         $result = "";
 
-        // On commence par la ligne 7 (Haut) et on descend vers 0 (Bas)
-        for ($row = 7; $row >= 0; $row--) {
+        // On commence par la ligne 0 (Haut) et on descend vers 7 (Bas)
+        for ($row = 0; $row <= 7; $row++) {
 
             // Petit indicateur de numéro de ligne sur le côté
             $result .= $row . " | ";
@@ -83,14 +89,12 @@ class Board implements InterfaceBoard{
                 $piece = $this->getPieceAt($pos);
 
                 if ($piece !== null) {
-                    // On appelle le render() de la pièce (ex: ♟, ♜, ♔)
                     $result .= $piece->render() . " ";
                 } else {
-                    // Case vide : on affiche un point ou un espace
                     $result .= ". ";
                 }
             }
-            $result .= "\n"; // Saut de ligne après chaque rangée
+            $result .= "\n";
         }
 
         // Affichage des lettres de colonnes en bas
@@ -101,14 +105,3 @@ class Board implements InterfaceBoard{
     }
 
 }
-
-
-$position=new Position(1,1);
-$piece= new King(PieceColor::WHITE,$position);
-
-$board=new Board();
-$board->placePiece($piece);
-var_dump($board->render());
-
-
-

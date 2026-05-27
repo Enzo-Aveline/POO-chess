@@ -1,7 +1,7 @@
 <?php
 
 
-abstract class Piece {
+abstract class Piece implements Renderable {
     protected PieceColor $color;
     protected Position $position;
     protected PieceType $type;
@@ -31,16 +31,22 @@ abstract class Piece {
         switch ($this->type) {
             case PieceType::KING:
                 $lettre = "k";
+                break;
             case PieceType::QUEEN:
                 $lettre = "q";
+                break;
             case PieceType::ROOK:
                 $lettre = "r";
+                break;
             case PieceType::BISHOP:
                 $lettre = "b";
+                break;
             case PieceType::KNIGHT:
                 $lettre = "n";
+                break;
             case PieceType::PAWN:
                 $lettre = "p";
+                break;
         }
         if ($this->color === PieceColor::WHITE){
             $lettre = strtoupper($lettre);
@@ -54,16 +60,17 @@ abstract class Piece {
         }
 
         if (!$this->isValidMovementShape($target)){
-            return false;
+            throw new InvalidMoveException;
         }
 
-        if ($board->getPieceAt($target)->color === $this->color){
-            return false;
+        $targetPiece = $board->getPieceAt($target);
+        if ($targetPiece !== null && $targetPiece->getColor() === $this->color){
+            throw new OccupiedByAllyException;
         }
         
         if ($this->type !== PieceType::KNIGHT){
             if(!$board->isPathClear($this->position,$target)){
-                return false;
+                throw new InvalidMoveException;
             }
         }
 

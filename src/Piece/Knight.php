@@ -10,7 +10,7 @@ class Knight extends Piece
 
     }
 
-    public function isValidMovementShape(Position $target):bool
+    protected function isValidMovementShape(Position $target):bool
     {
         // vrai si la difference entre la position actuele et la target entre terme de column et row sont identique
         // ou vrai si on ne bouge que sur la colone ou la ligne 

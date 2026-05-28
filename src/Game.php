@@ -46,7 +46,36 @@ class Game {
         //verification occupiedByAllyException fait dans canMove()
         //verification InvalidMoveException fait dans canMove()
 
+        // L'interdiction d'exposer son propre roi
+        if ($this->wouldExposeKing($move, $this->currentPlayer)) {
+            throw new ExposingKingException;
+        }
+
+        // Règles supplémentaires pour le Roque
+        if ($piece->getType() === PieceType::KING && abs($move->getTo()->getColumn() - $move->getFrom()->getColumn()) === 2) {
+            if ($this->isCheck($this->currentPlayer)) {
+                throw new InvalidMoveException("Le roque est impossible : le roi est en échec");
+            }
+            $direction = ($move->getTo()->getColumn() > $move->getFrom()->getColumn()) ? 1 : -1;
+            $passThroughPos = new Position($move->getFrom()->getRow(), $move->getFrom()->getColumn() + $direction);
+            $passThroughMove = new Move($move->getFrom(), $passThroughPos);
+            if ($this->wouldExposeKing($passThroughMove, $this->currentPlayer)) {
+                throw new InvalidMoveException("Le roque est impossible : le roi passe par une case contrôlée");
+            }
+        }
+
         $this->board->movePiece($move->getFrom(), $move->getTo());
+
+        // La promotion (automatique en Reine)
+        $movedPiece = $this->board->getPieceAt($move->getTo());
+        if ($movedPiece !== null && $movedPiece->getType() === PieceType::PAWN) {
+            $promotionRow = ($this->currentPlayer === PieceColor::WHITE) ? 0 : 7;
+            if ($move->getTo()->getRow() === $promotionRow) {
+                $this->board->removePieceAt($move->getTo());
+                $this->board->placePiece($this->pieceFactory->create(PieceType::QUEEN, $this->currentPlayer, $move->getTo()));
+            }
+        }
+
         $this->switchPlayer();
     }
 
@@ -65,6 +94,74 @@ class Game {
             } catch (ChessException $e) {}
         }
         return false;
+    }
+
+    /**
+     * Simule un mouvement pour vérifier s'il exposerait le roi de la couleur donnée.
+     * Utilisé pour empêcher un joueur de se mettre lui-même en échec.
+     *
+     * @param Move $move Le mouvement à simuler.
+     * @param PieceColor $color La couleur du joueur.
+     * @return bool True si le mouvement expose le roi, False sinon.
+     */
+    public function wouldExposeKing(Move $move, PieceColor $color): bool
+    {
+        $originalBoard = $this->board;
+        $this->board = clone $originalBoard;
+        
+        try {
+            // on simule le mouvement
+            // on ne fait pas les vérifications de Game::play, juste Board::movePiece
+            $this->board->movePiece($move->getFrom(), $move->getTo());
+        } catch (ChessException $e) {
+            // ignoré
+        }
+        
+        $isExposed = $this->isCheck($color);
+        
+        $this->board = $originalBoard;
+        
+        return $isExposed;
+    }
+
+    /**
+     * Vérifie si un joueur est échec et mat.
+     * Un joueur est échec et mat s'il est en échec et qu'aucun de ses
+     * mouvements possibles ne permet de parer l'échec.
+     *
+     * @param PieceColor $color La couleur du joueur à vérifier.
+     * @return bool True si c'est échec et mat.
+     */
+    public function isCheckmate(PieceColor $color): bool
+    {
+        if (!$this->isCheck($color)) {
+            return false;
+        }
+
+        $pieces = $this->board->getPieces();
+        foreach ($pieces as $piece) {
+            if ($piece->getColor() !== $color) {
+                continue;
+            }
+
+            for ($row = 0; $row <= 7; $row++) {
+                for ($col = 0; $col <= 7; $col++) {
+                    $targetPos = new Position($row, $col);
+                    try {
+                        if ($piece->canMove($this->board, $targetPos)) {
+                            $move = new Move($piece->getPosition(), $targetPos);
+                            if (!$this->wouldExposeKing($move, $color)) {
+                                return false; // On a trouvé un coup valide
+                            }
+                        }
+                    } catch (ChessException $e) {
+                        // Mouvement invalide, on ignore
+                    }
+                }
+            }
+        }
+
+        return true; // Aucun coup valide trouvé, c'est mat
     }
 
     private function setupPieces(): void

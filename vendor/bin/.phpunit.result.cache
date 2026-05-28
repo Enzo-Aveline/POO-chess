@@ -1,0 +1,1 @@
+{"version":2,"defects":{"BonusTest::testExposingKingThrowsException":8,"BonusTest::testCheckmate":7},"times":{"BonusTest::testExposingKingThrowsException":0.008,"BonusTest::testEnPassant":0.002,"BonusTest::testPromotion":0.002,"BonusTest::testCheckmate":0.001}}

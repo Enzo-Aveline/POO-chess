@@ -11,6 +11,9 @@ class Board implements Renderable {
     /** @var array<string, Piece> tableau associatif : cle = "row:col", valeur = objet Piece */
     private array $pieces = [];
 
+    /** @var Move|null le dernier coup joué (utile pour la prise en passant) */
+    private ?Move $lastMove = null;
+
 
     /**
      * place une piece sur le plateau a sa position actuelle
@@ -74,11 +77,20 @@ class Board implements Renderable {
             throw new NoPieceException;
         }
 
+        // Prise en passant : si le pion bouge en diagonale sur une case vide, on supprime le pion capturé
+        if ($piece->getType() === PieceType::PAWN && abs($from->getColumn() - $to->getColumn()) === 1 && !$this->hasPieceAt($to)) {
+            $capturedPawnPos = new Position($from->getRow(), $to->getColumn());
+            $this->removePieceAt($capturedPawnPos);
+        }
+
         // on enleve la piece de depart et la piece sur la case d'arrivee (si capture)
         $this->removePieceAt($from);
         $this->removePieceAt($to);
         $piece->setPosition($to);
         $this->placePiece($piece);
+
+        // on enregistre le coup
+        $this->lastMove = new Move($from, $to);
 
         // roque : si c'est un roi qui bouge de 2 cases on deplace la tour aussi
         if ($piece->getType() === PieceType::KING && abs($to->getColumn() - $from->getColumn()) === 2) {
@@ -131,6 +143,16 @@ class Board implements Renderable {
     }
 
     /**
+     * Retourne le dernier coup joué.
+     * Cette méthode est particulièrement utile pour valider la prise en passant.
+     * 
+     * @return Move|null Le dernier coup, ou null si aucun coup n'a été joué
+     */
+    public function getLastMove(): ?Move {
+        return $this->lastMove;
+    }
+
+    /**
      * cherche la position du roi d'une couleur donnee sur le plateau
      * 
      * @param PieceColor $color la couleur du roi qu'on cherche
@@ -179,6 +201,20 @@ class Board implements Renderable {
         $result .= "     0 1 2 3 4 5 6 7\n";
 
         return $result;
+    }
+
+    /**
+     * Effectue un clonage profond du plateau.
+     * Clone toutes les pièces présentes sur le plateau pour éviter que 
+     * la simulation d'un mouvement (via wouldExposeKing) ne modifie le vrai plateau.
+     */
+    public function __clone()
+    {
+        $clonedPieces = [];
+        foreach ($this->pieces as $key => $piece) {
+            $clonedPieces[$key] = clone $piece;
+        }
+        $this->pieces = $clonedPieces;
     }
 
 }

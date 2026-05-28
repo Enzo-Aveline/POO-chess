@@ -68,8 +68,20 @@ class Pawn extends Piece
             throw new InvalidMoveException;
         }
 
-        // diagonale : il doit y avoir une piece a capturer
+        // diagonale : il doit y avoir une pièce à capturer OU ce doit être une prise en passant valide
         if ($distanceCol === 1 && !$this->canCapture($board, $target)) {
+            // Vérification de la prise en passant
+            $lastMove = $board->getLastMove();
+            if ($lastMove !== null) {
+                $lastPiece = $board->getPieceAt($lastMove->getTo());
+                // verifier si le dernier coup etait un double saut de pion adverse juste a cote
+                if ($lastPiece !== null && $lastPiece->getType() === PieceType::PAWN && $lastPiece->getColor() !== $this->color) {
+                    $lastMoveDistance = abs($lastMove->getTo()->getRow() - $lastMove->getFrom()->getRow());
+                    if ($lastMoveDistance === 2 && $lastMove->getTo()->getRow() === $this->position->getRow() && $lastMove->getTo()->getColumn() === $target->getColumn()) {
+                        return parent::canMove($board, $target); // Prise en passant valide
+                    }
+                }
+            }
             throw new InvalidMoveException;
         }
 

@@ -69,33 +69,37 @@ class Game {
 
     private function setupPieces(): void
     {
-        //TODO version pas opti à voir plus tard si j'ai le temps
-        // Pièces noires en haut (lignes 0 et 1)
-        $this->board->placePiece($this->pieceFactory->create(PieceType::ROOK,PieceColor::BLACK,new Position(0,0)));
-        $this->board->placePiece($this->pieceFactory->create(PieceType::KNIGHT,PieceColor::BLACK,new Position(0,1)));
-        $this->board->placePiece($this->pieceFactory->create(PieceType::BISHOP,PieceColor::BLACK,new Position(0,2)));
-        $this->board->placePiece($this->pieceFactory->create(PieceType::QUEEN,PieceColor::BLACK,new Position(0,3)));
-        $this->board->placePiece($this->pieceFactory->create(PieceType::KING,PieceColor::BLACK,new Position(0,4)));
-        $this->board->placePiece($this->pieceFactory->create(PieceType::BISHOP,PieceColor::BLACK,new Position(0,5)));
-        $this->board->placePiece($this->pieceFactory->create(PieceType::KNIGHT,PieceColor::BLACK,new Position(0,6)));
-        $this->board->placePiece($this->pieceFactory->create(PieceType::ROOK,PieceColor::BLACK,new Position(0,7)));
+        // l'ordre des pieces sur la ligne du fond (col 0 a 7)
+        $backRow = [
+            PieceType::ROOK,
+            PieceType::KNIGHT,
+            PieceType::BISHOP,
+            PieceType::QUEEN,
+            PieceType::KING,
+            PieceType::BISHOP,
+            PieceType::KNIGHT,
+            PieceType::ROOK,
+        ];
 
-        for ($i=0 ; $i<8; $i++){
-            $this->board->placePiece($this->pieceFactory->create(PieceType::PAWN,PieceColor::BLACK,new Position(1,$i)));
-        }
+        // noir en haut (ligne 0), blanc en bas (ligne 7)
+        $setup = [
+            PieceColor::BLACK => ['backRow' => 0, 'pawnRow' => 1],
+            PieceColor::WHITE => ['backRow' => 7, 'pawnRow' => 6],
+        ];
 
-        // Pièces blanches en bas (lignes 6 et 7)
-        $this->board->placePiece($this->pieceFactory->create(PieceType::ROOK,PieceColor::WHITE,new Position(7,0)));
-        $this->board->placePiece($this->pieceFactory->create(PieceType::KNIGHT,PieceColor::WHITE,new Position(7,1)));
-        $this->board->placePiece($this->pieceFactory->create(PieceType::BISHOP,PieceColor::WHITE,new Position(7,2)));
-        $this->board->placePiece($this->pieceFactory->create(PieceType::QUEEN,PieceColor::WHITE,new Position(7,3)));
-        $this->board->placePiece($this->pieceFactory->create(PieceType::KING,PieceColor::WHITE,new Position(7,4)));
-        $this->board->placePiece($this->pieceFactory->create(PieceType::BISHOP,PieceColor::WHITE,new Position(7,5)));
-        $this->board->placePiece($this->pieceFactory->create(PieceType::KNIGHT,PieceColor::WHITE,new Position(7,6)));
-        $this->board->placePiece($this->pieceFactory->create(PieceType::ROOK,PieceColor::WHITE,new Position(7,7)));
-
-        for ($i=0 ; $i<8; $i++){
-            $this->board->placePiece($this->pieceFactory->create(PieceType::PAWN,PieceColor::WHITE,new Position(6,$i)));
+        foreach ($setup as $color => $rows) {
+            // on place les pieces du fond
+            foreach ($backRow as $col => $type) {
+                $this->board->placePiece(
+                    $this->pieceFactory->create($type, $color, new Position($rows['backRow'], $col))
+                );
+            }
+            // on place les pions
+            for ($i = 0; $i < 8; $i++) {
+                $this->board->placePiece(
+                    $this->pieceFactory->create(PieceType::PAWN, $color, new Position($rows['pawnRow'], $i))
+                );
+            }
         }
     }
 

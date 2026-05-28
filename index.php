@@ -30,66 +30,46 @@ $game->start();
 
 echo "--- Plateau Initial ---\n";
 echo $game->getBoard()->render();
-echo "Tour : " . $game->getCurrentPlayer()->name . "\n\n";
 
 try {
-    // pion blanc de (6,4) à (4,4)
-    echo "Action : Le Blanc joue son pion en E4...\n";
-    $move = new Move(new Position(6, 4), new Position(4, 4));
-    $game->play($move);
+    // === Préparation du terrain ===
+    echo "Action : Blanc pion E4...\n";
+    $game->play(new Move(new Position(6, 4), new Position(4, 4)));
 
-    // pion noir de (1,0) à (2,0)
-    echo "Action : Le Noir joue son pion en A6...\n";
-    $move = new Move(new Position(1, 0), new Position(2, 0));
-    $game->play($move);
+    echo "Action : Noir pion D5...\n";
+    $game->play(new Move(new Position(1, 3), new Position(3, 3)));
 
-    // fou blanc de (7,5) à (4,2)
-    echo "Action : Le Blanc joue fou en C4...\n";
-    $move = new Move(new Position(7, 5), new Position(4, 2));
-    $game->play($move);
+    echo "Action : Blanc fou C4...\n";
+    $game->play(new Move(new Position(7, 5), new Position(4, 2)));
 
-    // pion noir de (2,0) à (3,0)
-    echo "Action : Le Noir joue son pion en A5...\n";
-    $move = new Move(new Position(2, 0), new Position(3, 0));
-    $game->play($move);
+    echo "Action : Noir cavalier C6...\n";
+    $game->play(new Move(new Position(0, 1), new Position(2, 2)));
 
-    // dame blanche de (7,3) à (5,5)
-    echo "Action : Le Blanc joue sa dame en F3...\n";
-    $move = new Move(new Position(7, 3), new Position(5, 5));
-    $game->play($move);
+    echo "Action : Blanc cavalier F3...\n";
+    $game->play(new Move(new Position(7, 6), new Position(5, 5)));
 
-    // cavalier noir de (0,1) à (2,2)
-    echo "Action : Le Noir joue son cavalier en C6...\n";
-    $move = new Move(new Position(0, 1), new Position(2, 2));
-    $game->play($move);
+    echo "Action : Noir sort sa Dame en D6...\n";
+    $game->play(new Move(new Position(0, 3), new Position(2, 3)));
 
-    echo "check ? " . ($game->isCheck($game->getCurrentPlayer()) ? "true" : "false") . "\n"; 
+    echo "Action : Blanc fait un coup d'attente (Pion A3)...\n";
+    $game->play(new Move(new Position(6, 0), new Position(5, 0)));
+    
+    echo "Action : Noir fou D7...\n";
+    $game->play(new Move(new Position(0, 2), new Position(1, 3)));
 
-    // dame blanche de (5,5) à (1,5) (échec et mat)
-    echo "Action : Le Blanc joue sa dame en F7 (échec)...\n";
-    $move = new Move(new Position(5, 5), new Position(1, 5));
-    $game->play($move);
-
-    echo "check ? " . ($game->isCheck($game->getCurrentPlayer()) ? "true" : "false") . "\n"; 
-
-    echo "--- Plateau ---\n";
+    echo "--- Plateau avant les Roques ---\n";
     echo $game->getBoard()->render();
-    echo "Tour : " . $game->getCurrentPlayer()->name . "\n\n";
 
-    echo "Action : Le Noir essaie de bouger un pion...\n";
-    $move = new Move(new Position(1, 7), new Position(2, 7));
-    $game->play($move);
+    // === ROQUES ===
+    echo "Action : Blanc fait le PETIT ROQUE (Roi E1 -> G1)...\n";
+    $game->play(new Move(new Position(7, 4), new Position(7, 6)));
 
-    echo "--- Plateau ---\n";
+    echo "Action : Noir fait le GRAND ROQUE (Roi E8 -> C8)...\n";
+    $game->play(new Move(new Position(0, 4), new Position(0, 2)));
+
+    echo "--- Plateau final avec les 2 roques ---\n";
     echo $game->getBoard()->render();
-    echo "Tour : " . $game->getCurrentPlayer()->name . "\n\n";
-
-    // resultat
-    echo "--- Plateau ---\n";
-    echo $game->getBoard()->render();
-    echo "Nouveau tour : " . $game->getCurrentPlayer()->name . "\n";
 
 } catch (ChessException $e) {
     echo "Error : " . $e->getMessage() . "\n";
 }
-

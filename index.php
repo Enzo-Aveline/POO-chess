@@ -1,75 +1,142 @@
 <?php
 
-require_once 'src/Contract/Renderable.php';
-require_once 'src/Enum/PieceColor.php';
-require_once 'src/Enum/PieceType.php';
+require_once 'vendor/autoload.php';
 
-require_once 'src/Position.php';
-require_once 'src/Move.php';
+echo "==========================================\n";
+echo "=== DEMONSTRATION DES BONUS POO CHESS ===\n";
+echo "==========================================\n\n";
 
-require_once 'src/Exception/ChessException.php';
-require_once 'src/Exception/NoPieceException.php';
-require_once 'src/Exception/WrongTurnException.php';
-require_once 'src/Exception/InvalidMoveException.php';
-require_once 'src/Exception/OccupiedByAllyException.php';
+// Fonction utilitaire pour vider le plateau
+function clearBoard(Board $board) {
+    foreach ($board->getPieces() as $piece) {
+        $board->removePieceAt($piece->getPosition());
+    }
+}
 
-require_once 'src/Piece/Piece.php';
-require_once 'src/Piece/Pawn.php';
-require_once 'src/Piece/Rook.php';
-require_once 'src/Piece/Knight.php';
-require_once 'src/Piece/Bishop.php';
-require_once 'src/Piece/Queen.php';
-require_once 'src/Piece/King.php';
+$factory = new PieceFactory();
 
-require_once 'src/Factory/PieceFactory.php';
-require_once 'src/Board.php';
-require_once 'src/Game.php';
+// ---------------------------------------------------------
+// 1. L'interdiction d'exposer son propre roi
+// ---------------------------------------------------------
+echo "------------------------------------------\n";
+echo "--- 1. Interdiction d'exposer son roi ---\n";
+echo "------------------------------------------\n";
+$game = new Game();
+$board = $game->getBoard();
+clearBoard($board);
+// Roi blanc, Tour noire, et Cavalier blanc entre les deux
+$board->placePiece($factory->create(PieceType::KING, PieceColor::WHITE, new Position(7, 4)));
+$board->placePiece($factory->create(PieceType::ROOK, PieceColor::BLACK, new Position(7, 0)));
+$board->placePiece($factory->create(PieceType::KNIGHT, PieceColor::WHITE, new Position(7, 2)));
 
+echo $board->render();
+echo "Action : Le Cavalier blanc tente de bouger en (5,3)...\n";
+try {
+    $game->play(new Move(new Position(7, 2), new Position(5, 3)));
+} catch (Exception $e) {
+    echo "--> Resultat attendu (Exception) : " . $e->getMessage() . "\n";
+}
+echo "\n";
+
+
+// ---------------------------------------------------------
+// 2. Le Roque
+// ---------------------------------------------------------
+echo "------------------------------------------\n";
+echo "--- 2. Le Roque (Petit et Grand)      ---\n";
+echo "------------------------------------------\n";
 $game = new Game();
 $game->start();
+// On force un peu le plateau en enlevant les pièces gênantes
+$board = $game->getBoard();
+$board->removePieceAt(new Position(7, 5)); // Fou blanc
+$board->removePieceAt(new Position(7, 6)); // Cavalier blanc
+$board->removePieceAt(new Position(0, 1)); // Cavalier noir
+$board->removePieceAt(new Position(0, 2)); // Fou noir
+$board->removePieceAt(new Position(0, 3)); // Reine noire
 
-echo "--- Plateau Initial ---\n";
-echo $game->getBoard()->render();
+echo $board->render();
+echo "Action : Blanc fait le PETIT ROQUE (Roi (7,4) -> (7,6))...\n";
+$game->play(new Move(new Position(7, 4), new Position(7, 6)));
 
-try {
-    // === Préparation du terrain ===
-    echo "Action : Blanc pion E4...\n";
-    $game->play(new Move(new Position(6, 4), new Position(4, 4)));
+echo "Action : Noir fait le GRAND ROQUE (Roi (0,4) -> (0,2))...\n";
+$game->play(new Move(new Position(0, 4), new Position(0, 2)));
 
-    echo "Action : Noir pion D5...\n";
-    $game->play(new Move(new Position(1, 3), new Position(3, 3)));
+echo $board->render();
 
-    echo "Action : Blanc fou C4...\n";
-    $game->play(new Move(new Position(7, 5), new Position(4, 2)));
 
-    echo "Action : Noir cavalier C6...\n";
-    $game->play(new Move(new Position(0, 1), new Position(2, 2)));
+// ---------------------------------------------------------
+// 3. La Prise en Passant
+// ---------------------------------------------------------
+echo "------------------------------------------\n";
+echo "--- 3. La Prise en passant            ---\n";
+echo "------------------------------------------\n";
+$game = new Game();
+$board = $game->getBoard();
+clearBoard($board);
+// Pion noir en haut, Pion blanc au milieu
+$board->placePiece($factory->create(PieceType::PAWN, PieceColor::BLACK, new Position(1, 4)));
+$board->placePiece($factory->create(PieceType::PAWN, PieceColor::WHITE, new Position(3, 3)));
 
-    echo "Action : Blanc cavalier F3...\n";
-    $game->play(new Move(new Position(7, 6), new Position(5, 5)));
+// On force le dernier coup à être un double pas du pion noir
+echo "Action : Noir avance son pion de (1,4) à (3,4) (double pas)...\n";
+$board->movePiece(new Position(1, 4), new Position(3, 4));
+echo $board->render();
 
-    echo "Action : Noir sort sa Dame en D6...\n";
-    $game->play(new Move(new Position(0, 3), new Position(2, 3)));
+echo "Action : Blanc capture en passant en (2,4) avec son pion en (3,3)...\n";
+// Simulation du tour blanc pour Game::play
+$board->placePiece($factory->create(PieceType::KING, PieceColor::WHITE, new Position(7, 7))); // juste pour avoir un roi
+$board->placePiece($factory->create(PieceType::KING, PieceColor::BLACK, new Position(0, 7)));
+$game->play(new Move(new Position(3, 3), new Position(2, 4)));
+echo "--> Résultat : Le pion noir a été capturé ! (la case 3:4 est vide)\n";
+echo $board->render();
+echo "\n";
 
-    echo "Action : Blanc fait un coup d'attente (Pion A3)...\n";
-    $game->play(new Move(new Position(6, 0), new Position(5, 0)));
-    
-    echo "Action : Noir fou D7...\n";
-    $game->play(new Move(new Position(0, 2), new Position(1, 3)));
 
-    echo "--- Plateau avant les Roques ---\n";
-    echo $game->getBoard()->render();
+// ---------------------------------------------------------
+// 4. La Promotion
+// ---------------------------------------------------------
+echo "------------------------------------------\n";
+echo "--- 4. La Promotion                   ---\n";
+echo "------------------------------------------\n";
+$game = new Game();
+$board = $game->getBoard();
+clearBoard($board);
+$board->placePiece($factory->create(PieceType::PAWN, PieceColor::WHITE, new Position(1, 0))); // Pion blanc juste avant la ligne
+$board->placePiece($factory->create(PieceType::KING, PieceColor::WHITE, new Position(7, 7))); 
+$board->placePiece($factory->create(PieceType::KING, PieceColor::BLACK, new Position(0, 7)));
 
-    // === ROQUES ===
-    echo "Action : Blanc fait le PETIT ROQUE (Roi E1 -> G1)...\n";
-    $game->play(new Move(new Position(7, 4), new Position(7, 6)));
+echo $board->render();
+echo "Action : Blanc avance son pion en (0,0)...\n";
+$game->play(new Move(new Position(1, 0), new Position(0, 0)));
+echo "--> Résultat : Le pion a été promu en Reine ! (Regardez la case 0:0)\n";
+echo $board->render();
+echo "\n";
 
-    echo "Action : Noir fait le GRAND ROQUE (Roi E8 -> C8)...\n";
-    $game->play(new Move(new Position(0, 4), new Position(0, 2)));
 
-    echo "--- Plateau final avec les 2 roques ---\n";
-    echo $game->getBoard()->render();
+// ---------------------------------------------------------
+// 5. L'échec et mat
+// ---------------------------------------------------------
+echo "------------------------------------------\n";
+echo "--- 5. L'échec et mat                 ---\n";
+echo "------------------------------------------\n";
+$game = new Game();
+$board = $game->getBoard();
+clearBoard($board);
 
-} catch (ChessException $e) {
-    echo "Error : " . $e->getMessage() . "\n";
+// Couloir de la mort pour le roi noir
+$board->placePiece($factory->create(PieceType::KING, PieceColor::BLACK, new Position(0, 0)));
+$board->placePiece($factory->create(PieceType::PAWN, PieceColor::BLACK, new Position(1, 0)));
+$board->placePiece($factory->create(PieceType::PAWN, PieceColor::BLACK, new Position(1, 1)));
+
+// Tour blanche qui donne le mat
+$board->placePiece($factory->create(PieceType::ROOK, PieceColor::WHITE, new Position(0, 7)));
+echo $board->render();
+
+echo "Action : Vérification de l'échec et mat pour le joueur NOIR...\n";
+if ($game->isCheckmate(PieceColor::BLACK)) {
+    echo "--> Résultat : Le joueur NOIR est bien en ÉCHEC ET MAT !\n";
+} else {
+    echo "--> Résultat : Pas de mat détecté.\n";
 }
+echo "\n";

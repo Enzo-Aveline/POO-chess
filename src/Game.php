@@ -180,11 +180,12 @@ class Game {
 
         // noir en haut (ligne 0), blanc en bas (ligne 7)
         $setup = [
-            PieceColor::BLACK => ['backRow' => 0, 'pawnRow' => 1],
-            PieceColor::WHITE => ['backRow' => 7, 'pawnRow' => 6],
+            ['color' => PieceColor::BLACK, 'backRow' => 0, 'pawnRow' => 1],
+            ['color' => PieceColor::WHITE, 'backRow' => 7, 'pawnRow' => 6],
         ];
 
-        foreach ($setup as $color => $rows) {
+        foreach ($setup as $rows) {
+            $color = $rows['color'];
             // on place les pieces du fond
             foreach ($backRow as $col => $type) {
                 $this->board->placePiece(
